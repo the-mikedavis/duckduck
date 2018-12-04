@@ -3,11 +3,12 @@ defmodule DuckDuck.MixProject do
 
   def project do
     [
-      app: :duck_duck,
+      app: :duckduck,
       version: "0.1.0",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      aliases: aliases()
     ]
   end
 
@@ -21,5 +22,27 @@ defmodule DuckDuck.MixProject do
     [
       {:httpoison, "~> 1.4"}
     ]
+  end
+
+  defp aliases do
+    [
+      bless: [&bless/1]
+    ]
+  end
+
+  defp bless(_) do
+    [
+      {"compile", ["--warnings-as-errors", "--force"]},
+      {"coveralls.html", []},
+      {"format", ["--check-formatted"]},
+      {"credo", []},
+      {"dialyzer", []}
+    ]
+    |> Enum.each(fn {task, args} ->
+      IO.ANSI.format([:cyan, "Running #{task} with args #{inspect(args)}"])
+      |> IO.puts()
+
+      Mix.Task.run(task, args)
+    end)
   end
 end
