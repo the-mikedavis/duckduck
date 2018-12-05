@@ -4,6 +4,7 @@ defmodule DuckDuck.MixProject do
   def project do
     [
       name: "DuckDuck",
+      description: "A Mix Task to upload Distillery releases to GitHub.",
       app: :duckduck,
       version: "0.1.0",
       elixir: "~> 1.5",
