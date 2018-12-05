@@ -60,3 +60,8 @@ def deps do
   ]
 end
 ```
+
+## Inspiration
+
+I liked and used [GHR](https://github.com/tcnksm/ghr) for a while, but wanted
+a native Elixir solution.
