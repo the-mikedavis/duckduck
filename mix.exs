@@ -24,6 +24,7 @@ defmodule DuckDuck.MixProject do
 
   defp deps do
     [
+      {:jason, "~> 1.1"},
       {:httpoison, "~> 1.4"},
       {:ex_doc, "~> 0.19.1", only: [:dev, :test]},
       {:credo, "~> 0.9.1", only: [:dev, :test], runtime: false},
