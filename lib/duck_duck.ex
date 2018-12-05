@@ -54,6 +54,7 @@ defmodule DuckDuck do
     else
       {:ok, api_token} ->
         api_token
+
       true ->
         token_file
         |> File.read!()
@@ -84,6 +85,7 @@ defmodule DuckDuck do
     |> case do
       {:error, :not_found} ->
         create_release_from_tag(api_token, owner, repo, tag)
+
       {:ok, url} ->
         url
     end
@@ -148,12 +150,10 @@ defmodule DuckDuck do
   defp validate_upload_url(%{"upload_url" => url}), do: {:ok, url}
 
   defp good_upload?(%{"errors" => [%{"code" => "already_exists"}]}) do
-    puts_failure(
-      """
-      GitHub said that there's already a release artifact with this name for
-      this tag! Make a new tag and trying again.
-      """
-    )
+    puts_failure("""
+    GitHub said that there's already a release artifact with this name for
+    this tag! Make a new tag and trying again.
+    """)
   end
 
   # denotes that a release was successfully uploaded

@@ -28,6 +28,7 @@ defmodule Mix.Tasks.Goose do
     else
       [] ->
         puts_failure("No local release files found for #{tag}!")
+
       [_ | _] ->
         puts_failure("Found too many local release files for #{tag}")
     end
