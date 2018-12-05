@@ -3,6 +3,7 @@ defmodule DuckDuck.MixProject do
 
   def project do
     [
+      name: "DuckDuck",
       app: :duckduck,
       version: "0.1.0",
       elixir: "~> 1.5",
@@ -12,7 +13,9 @@ defmodule DuckDuck.MixProject do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         bless: :test
-      ]
+      ],
+      package: package(),
+      source_url: "https://github.com/the-mikedavis/duckduck.git"
     ]
   end
 
@@ -30,6 +33,16 @@ defmodule DuckDuck.MixProject do
       {:credo, "~> 0.9.1", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.7", only: :test},
       {:private, "~> 0.1.1"}
+    ]
+  end
+
+  defp package do
+    [
+      name: "duckduck",
+      licenses: ["BSD3"],
+      links: %{"GitHub" => "https://github.com/the-mikedavis/duckduck.git"},
+      files: ~w(lib LICENSE mix.exs README.md .formatter.exs),
+      maintainers: ["Michael Davis"]
     ]
   end
 

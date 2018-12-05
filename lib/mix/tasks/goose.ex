@@ -10,6 +10,9 @@ defmodule Mix.Tasks.Goose do
   @shortdoc "A mix task to upload distillery releases to GitHub."
   @recursive false
 
+  @doc "Upload a release artifact to GitHub."
+  def run(argv)
+
   def run([tag]) do
     {:ok, _all} = Application.ensure_all_started(:httpoison)
 
@@ -32,5 +35,11 @@ defmodule Mix.Tasks.Goose do
       [_ | _] ->
         puts_failure("Found too many local release files for #{tag}")
     end
+  end
+
+  def run(_) do
+    IO.puts("Usage: `MIX_ENV=<env> mix goose <tag>`")
+
+    System.halt(1)
   end
 end
