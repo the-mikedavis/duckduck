@@ -19,9 +19,12 @@ Couple prerequisites for using duckduck:
 <details>
 <summary><b>Create a GitHub API Token</b></summary>
 <br>
+
 Click on your icon in the top right and go to `Settings`. Go into `Developer
 Settings`. You're a real hacker now. Click `Personal Access Tokens > Generate
-new token`. Sign in. Write something memorable in the token description, like
+new token`. Sign in.
+
+Write something memorable in the token description, like
 `fossilized geese`. Check the box named `repo`, giving access to all the
 children `repo:status`, `repo_deployment`, `public_repo`, and `repo:invite`.
 Don't check those individually and leave `repo` unchecked though. You'll need
