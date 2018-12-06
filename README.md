@@ -5,9 +5,57 @@ useful for CI/CD pipelines that pull directly from GitHub releases. You can get
 travis or circle-ci to do it for you, but in some projects (like if you use Elm
 or have large brunch builds), the VMs from travis or circle are too small.
 
+Think of Duckduck as a ~better version of~ alternative to
+[edeliver](https://github.com/edeliver/edeliver).
+
 To see a project that actually uses duckduck, check out
 [doc_gen](https://github.com/the-mikedavis/doc_gen). DocGen uses elm in the
 front end, and I can't get that to build on travis.
+
+## Setup
+
+Couple prerequisites for using duckduck:
+
+<details>
+<summary><b>Create a GitHub API Token</b></summary>
+<br>
+Click on your icon in the top right and go to `Settings`. Go into `Developer
+Settings`. You're a real hacker now. Click `Personal Access Tokens > Generate
+new token`. Sign in. Write something memorable in the token description, like
+`fossilized geese`. Check the box named `repo`, giving access to all the
+children `repo:status`, `repo_deployment`, `public_repo`, and `repo:invite`.
+Don't check those individually and leave `repo` unchecked though. You'll need
+full repo access to upload artifacts.
+</details>
+
+<details>
+<summary><b>Setup your Config Files for DuckDuck</b></summary>
+<br>
+DuckDuck needs to know some things about your GitHub. Setup a block like this
+in `config/config.exs`. Or if you're fancy, you can setup different configs
+for uploading releases in each environment (e.g. `config/dev.exs`).
+
+```elixir
+config :goose,
+  owner: "the-mikedavis",
+  repo: "duckduck",
+  token_file: "~/.goose_api_token" # this is the default value if omitted
+```
+
+Here `owner` is the repo owner and `repo` is the repo name as GitHub knows it.
+I.e. if your repo url is `https://github.com/<owner>/<repo>`, use those.
+
+Instead of using a `token_file`, you can use the `api_token: "MY_KEY"` key.
+Please don't put your GitHub API Token in plaintext in a public repo. If you're
+gonna use `api_token`, please use an environment variable at least:
+
+```elixir
+config :goose,
+  owner: "the-mikedavis",
+  repo: "duckduck",
+  api_token: System.get_env("GOOSE_API_TOKEN")
+```
+</details>
 
 ## Usage
 
