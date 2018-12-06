@@ -65,3 +65,7 @@ end
 
 I liked and used [GHR](https://github.com/tcnksm/ghr) for a while, but wanted
 a native Elixir solution.
+
+## Contributing
+
+Having troubles using duckduck or have ideas? Send me an issue or a PR!
