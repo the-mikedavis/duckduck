@@ -13,6 +13,17 @@ defmodule Mix.Tasks.Goose do
   @doc "Upload a release artifact to GitHub."
   def run(argv)
 
+  def run([]) do
+    if Mix.env() == :prod do
+      {tag_string, 0} = System.cmd("git", ["describe", "--abbrev=0"])
+      tag = String.trim(tag_string)
+
+      run([tag])
+    else
+      usage_and_exit()
+    end
+  end
+
   def run([tag]) do
     {:ok, _all} = Application.ensure_all_started(:httpoison)
 
@@ -20,8 +31,8 @@ defmodule Mix.Tasks.Goose do
       Mix.Project.config()
       |> Keyword.fetch!(:app)
 
-    owner = Application.fetch_env!(:goose, :owner)
-    repo = Application.fetch_env!(:goose, :repo)
+    owner = Application.fetch_env!(:duckduck, :owner)
+    repo = Application.fetch_env!(:duckduck, :repo)
 
     with [release] <- release_files(app_name, tag, Mix.Project.build_path()),
          api_token <- read_api_token(),
@@ -37,7 +48,9 @@ defmodule Mix.Tasks.Goose do
     end
   end
 
-  def run(_) do
+  def run(_), do: usage_and_exit()
+
+  defp usage_and_exit do
     IO.puts("Usage: `MIX_ENV=<env> mix goose <tag>`")
 
     System.halt(1)
