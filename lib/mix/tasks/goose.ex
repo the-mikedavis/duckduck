@@ -51,7 +51,7 @@ defmodule Mix.Tasks.Goose do
   def run(_), do: usage_and_exit()
 
   defp usage_and_exit do
-    IO.puts("Usage: `MIX_ENV=<env> mix goose <tag>`")
+    IO.puts("Usage: `MIX_ENV=<env> mix goose [<tag>]`")
 
     System.halt(1)
   end

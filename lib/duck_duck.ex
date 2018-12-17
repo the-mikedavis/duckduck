@@ -10,7 +10,7 @@ defmodule DuckDuck do
 
   ```
   # config/config.exs
-  config :goose,
+  config :duckduck,
     owner: "the-mikedavis",
     repo: "duck_duck",
     token_file: "~/.duck_duck_token_file" # OR
@@ -43,11 +43,11 @@ defmodule DuckDuck do
   @spec read_api_token() :: String.t() | no_return()
   def read_api_token do
     token_file =
-      :goose
+      :duckduck
       |> Application.get_env(:token_file, "~/.goose_api_token")
       |> Path.expand()
 
-    with :error <- Application.fetch_env(:goose, :api_token),
+    with :error <- Application.fetch_env(:duckduck, :api_token),
          false <- File.exists?(token_file) do
       puts_failure(@no_api_token_msg)
       System.halt(1)

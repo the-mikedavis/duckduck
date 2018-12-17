@@ -39,7 +39,7 @@ in `config/config.exs`. Or if you're fancy, you can setup different configs
 for uploading releases in each environment (e.g. `config/dev.exs`).
 
 ```elixir
-config :goose,
+config :duckduck,
   owner: "the-mikedavis",
   repo: "duckduck",
   token_file: "~/.goose_api_token" # this is the default value if omitted
@@ -53,7 +53,7 @@ Please don't put your GitHub API Token in plaintext in a public repo. If you're
 gonna use `api_token`, please use an environment variable at least:
 
 ```elixir
-config :goose,
+config :duckduck,
   owner: "the-mikedavis",
   repo: "duckduck",
   api_token: System.get_env("GOOSE_API_TOKEN")
@@ -88,7 +88,7 @@ $ MIX_ENV=prod mix release --env=prod
 Then use duckduck to upload the release artifact that you just generated.
 
 ```
-$ MIX_ENV=prod mix goose v25
+$ MIX_ENV=prod mix goose
 ```
 
 *N.B.*
