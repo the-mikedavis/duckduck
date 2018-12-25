@@ -97,25 +97,75 @@ $ MIX_ENV=prod mix goose
   - this allows you to upload dev releases, if that's your kinda thing
 - you must configure releases to be named similarly to the git tag
   - [example distillery config](https://github.com/the-mikedavis/doc_gen/blob/master/rel/config.exs#L53-L58)
-  - the matching is done with globbing `/releases/#{tag}*/#{app_name}.tar.gz`
+  - the matching is done with globbing `_build/#{Mix.env()}/rel/#{app_name}/releases/#{tag}*/#{app_name}.tar.gz`
 
-You should probably set this up as an alias in your `mix.exs`. Again, look at
-doc_gen.
+## A Useful Alias
+
+Making aliases is pretty cool. Here's an alias that does it all:
+
+```elixir
+# mix.exs
+defmodule MyApp.Mixfile do
+  use Mix.Project
+
+  def project do
+    [
+      ...
+      aliases: aliases(),
+      preferred_cli_env: [
+        build_and_upload: :prod,
+        goose: :prod
+      ],
+      ...
+    ]
+  end
+
+  ...
+
+  defp aliases do
+    [
+      build_and_upload: [&build_assets/1, "phx.digest", "release", "goose"]
+    ]
+  end
+
+  # If you use brunch
+  defp build_assets(_) do
+    assets_path = Path.join(System.cwd!(), "assets")
+
+    assets_path
+    |> Path.join("node_modules/.bin/brunch")
+    |> System.cmd(["build", "--production"], cd: assets_path)
+  end
+
+  # If you use webpack
+  defp build_assets(_) do
+    assets_path = Path.join(System.cwd!(), "assets")
+
+    assets_path
+    |> Path.join("node_modules/.bin/webpack")
+    |> System.cmd(["--production"], cd: assets_path)
+  end
+end
+```
+
+Now you can write `$ mix build_and_upload` (without `MIX_ENV=prod` wow!) and
+it'll build you assets in production, digest them, build a release with
+distillery, and upload the tarball to GitHub.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:duckduck, git: "https://github.com/the-mikedavis/duckduck.git"}
+    {:duckduck, "~> 0.2"}
   ]
 end
 ```
 
 ## Inspiration
 
-I liked and used [GHR](https://github.com/tcnksm/ghr) for a while, but wanted
-a native Elixir solution.
+I liked and used [`ghr`](https://github.com/tcnksm/ghr) for a while, but wanted
+a native Elixir solution. Installing go is still kinda painful.
 
 ## Contributing
 
