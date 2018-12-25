@@ -13,11 +13,19 @@ defmodule DuckDuck.CLITest do
     end
 
     test "the path flag" do
-      assert CLI.parse!(["--file", "_build/artifact.tar.gz"]) == %{file: "_build/artifact.tar.gz"}
+      assert CLI.parse!(["--file", "_build/artifact.tar.gz"]) == %{
+               file: "_build/artifact.tar.gz"
+             }
     end
 
     test "all together now" do
-      assert CLI.parse!(["--tag", "v220", "--file", "_build/artifact.tar.gz", "--yes"]) == %{
+      assert CLI.parse!([
+               "--tag",
+               "v220",
+               "--file",
+               "_build/artifact.tar.gz",
+               "--yes"
+             ]) == %{
                yes: true,
                tag: "v220",
                file: "_build/artifact.tar.gz"
@@ -25,11 +33,12 @@ defmodule DuckDuck.CLITest do
     end
 
     test "all aliases" do
-      assert CLI.parse!(["-t", "v220", "-f", "_build/artifact.tar.gz", "-y"]) == %{
-               yes: true,
-               tag: "v220",
-               file: "_build/artifact.tar.gz"
-             }
+      assert CLI.parse!(["-t", "v220", "-f", "_build/artifact.tar.gz", "-y"]) ==
+               %{
+                 yes: true,
+                 tag: "v220",
+                 file: "_build/artifact.tar.gz"
+               }
     end
   end
 end

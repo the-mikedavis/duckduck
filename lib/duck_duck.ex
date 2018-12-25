@@ -84,7 +84,8 @@ defmodule DuckDuck do
     |> valid?()
   end
 
-  @spec find_upload_url(String.t(), String.t(), String.t(), String.t()) :: String.t()
+  @spec find_upload_url(String.t(), String.t(), String.t(), String.t()) ::
+          String.t()
   def find_upload_url(api_token, owner, repo, tag) do
     headers = auth_header(api_token)
 
@@ -104,7 +105,8 @@ defmodule DuckDuck do
     |> String.replace(~r/\{.*\}/, "")
   end
 
-  @spec create_release_from_tag(String.t(), String.t(), String.t(), String.t()) :: String.t()
+  @spec create_release_from_tag(String.t(), String.t(), String.t(), String.t()) ::
+          String.t()
   def create_release_from_tag(api_token, owner, repo, tag) do
     headers = auth_header(api_token)
     body = Jason.encode!(%{"tag_name" => tag})
@@ -124,7 +126,10 @@ defmodule DuckDuck do
 
     upload_url
     |> build_upload_asset_url(path)
-    |> HTTPoison.post!({:file, path}, headers, timeout: 50_000, recv_timeout: 50_000)
+    |> HTTPoison.post!({:file, path}, headers,
+      timeout: 50_000,
+      recv_timeout: 50_000
+    )
     |> Map.get(:body)
     |> Jason.decode!()
     |> good_upload?()

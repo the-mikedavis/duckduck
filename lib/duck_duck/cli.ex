@@ -10,7 +10,8 @@ defmodule DuckDuck.CLI do
   @aliases [t: :tag, f: :file, y: :yes]
 
   def parse!(argv) do
-    {parsed, _rest} = OptionParser.parse!(argv, switches: @switches, aliases: @aliases)
+    {parsed, _rest} =
+      OptionParser.parse!(argv, switches: @switches, aliases: @aliases)
 
     Map.new(parsed)
   end
@@ -26,7 +27,8 @@ defmodule DuckDuck.CLI do
 
     file =
       case release_files(app_name, tag, Project.build_path()) do
-        [file] -> file
+        [file] ->
+          file
 
         [] ->
           fail("No local release files found for #{tag}!")
@@ -45,6 +47,7 @@ defmodule DuckDuck.CLI do
   end
 
   def confirm!(%{yes: true} = opts), do: opts
+
   def confirm!(%{file: file, tag: tag} = opts) do
     "I want to upload #{file} to tag #{tag}.\nIs this ok? [Y/n] "
     |> IO.gets()
