@@ -32,6 +32,18 @@ defmodule DuckDuck do
     |> IO.puts()
   end
 
+  def fail(str) do
+    puts_failure(str)
+
+    System.halt(1)
+  end
+
+  def get_tag do
+    {tag_string, 0} = System.cmd("git", ["describe", "--abbrev=0"])
+
+    String.trim(tag_string)
+  end
+
   # given an app name, get the name of the release artifact
   @spec release_files(atom(), String.t(), Path.t()) :: Path.t()
   def release_files(app, tag, build_path) do
@@ -153,6 +165,12 @@ defmodule DuckDuck do
     puts_failure("""
     GitHub said that there's already a release artifact with this name for
     this tag! Make a new tag and trying again.
+    """)
+  end
+
+  defp good_upload?(%{"message" => "Not Found"}) do
+    puts_failure("""
+    I could not write to this tag! Check your token and try again.
     """)
   end
 
