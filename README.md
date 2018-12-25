@@ -3,7 +3,7 @@
 DuckDuck is a mix task that uploads Distillery releases to GitHub. This is
 useful for CI/CD pipelines that pull directly from GitHub releases. You can get
 travis or circle-ci to do it for you, but in some projects (like if you use Elm
-or have large brunch builds), the VMs from travis or circle are too small.
+or have large brunch builds,) the VMs from travis or circle are too small.
 
 Think of Duckduck as a ~better version of~ alternative to
 [edeliver](https://github.com/edeliver/edeliver).
