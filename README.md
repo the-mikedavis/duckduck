@@ -99,6 +99,12 @@ $ MIX_ENV=prod mix goose
   - [example distillery config](https://github.com/the-mikedavis/doc_gen/blob/master/rel/config.exs#L53-L58)
   - the matching is done with globbing `_build/#{Mix.env()}/rel/#{app_name}/releases/#{tag}*/#{app_name}.tar.gz`
 
+## Flags
+
+- `--tag <tag>` or `-t <tag>`: specify the tag you want to upload
+- `--file <path>` or `-f <path>`: specify the file you want to upload
+- `--yes` or `-y`: don't ask for confirmation; useful for running non-interactively
+
 ## A Useful Alias
 
 Making aliases is pretty cool. Here's an alias that does it all:
