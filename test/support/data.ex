@@ -1,4 +1,9 @@
 defmodule DuckDuck.TestData do
+  @moduledoc """
+  Data I've sourced from doing real uploads. Used in the moxing of the
+  http requests.
+  """
+
   def token_http_response do
     {:ok,
      %HTTPoison.Response{
@@ -221,7 +226,7 @@ defmodule DuckDuck.TestData do
           {"Authorization", "token TOKEN"}
         ],
         method: :post,
-        options: [timeout: 50000, recv_timeout: 50000],
+        options: [timeout: :infinity, recv_timeout: :infinity],
         params: %{},
         url:
           "https://uploads.github.com/repos/the-mikedavis/doc_gen/releases/14702417/assets?name=doc_gen.tar.gz"
@@ -259,7 +264,7 @@ defmodule DuckDuck.TestData do
           {"Authorization", "token TOKEN"}
         ],
         method: :post,
-        options: [timeout: 50000, recv_timeout: 50000],
+        options: [timeout: :infinity, recv_timeout: :infinity],
         params: %{},
         url:
           "https://uploads.github.com/repos/the-mikedavis/doc_gen/releases/14702417/assets?name=doc_gen.tar.gz"

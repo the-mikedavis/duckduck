@@ -100,24 +100,14 @@ defmodule DuckDuck.Effects do
       timeout: :infinity,
       recv_timeout: :infinity
     )
-    |> IO.inspect(label: "post_file", limit: :infinity)
   end
 
   @impl true
-  def post!(url, body, headers) do
-    HTTPoison.post!(url, body, headers)
-    |> IO.inspect(label: "post!", limit: :infinity)
-  end
+  def post!(url, body, headers), do: HTTPoison.post!(url, body, headers)
 
   @impl true
-  def get!(url, headers) do
-    HTTPoison.get!(url, headers)
-    |> IO.inspect(label: "get!", limit: :infinity)
-  end
+  def get!(url, headers), do: HTTPoison.get!(url, headers)
 
   @impl true
-  def get(url, headers) do
-    HTTPoison.get(url, headers)
-    |> IO.inspect(label: "get", limit: :infinity)
-  end
+  def get(url, headers), do: HTTPoison.get(url, headers)
 end
