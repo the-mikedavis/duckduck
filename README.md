@@ -1,4 +1,4 @@
-# DuckDuck
+# DuckDuck [![Coverage Status](https://coveralls.io/repos/github/the-mikedavis/duckduck/badge.svg?branch=master)](https://coveralls.io/github/the-mikedavis/duckduck?branch=master) [![Build Status](https://travis-ci.com/the-mikedavis/duckduck.svg?branch=master)](https://travis-ci.com/the-mikedavis/duckduck)
 
 DuckDuck is a mix task that uploads Distillery releases to GitHub. This is
 useful for CI/CD pipelines that pull directly from GitHub releases. You can get
