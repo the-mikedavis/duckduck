@@ -5,9 +5,12 @@ defmodule DuckDuck.CLI do
 
   import DuckDuck
   alias Mix.Project
+  alias DuckDuck.Effects
 
   @switches [tag: :string, file: :string, yes: :boolean]
   @aliases [t: :tag, f: :file, y: :yes]
+
+  @effects Application.get_env(:duckduck, :effects_client, Effects)
 
   def parse!(argv) do
     {parsed, _rest} =
@@ -20,13 +23,14 @@ defmodule DuckDuck.CLI do
 
   def resolve!(%{tag: _tag, file: _file} = opts), do: opts
 
-  def resolve!(%{file: _file} = opts), do: Map.put(opts, :tag, get_tag())
+  def resolve!(%{file: _file} = opts),
+    do: Map.put(opts, :tag, @effects.get_tag())
 
   def resolve!(%{tag: tag} = opts) do
     app_name = Keyword.fetch!(Project.config(), :app)
 
     file =
-      case release_files(app_name, tag, Project.build_path()) do
+      case @effects.release_files(app_name, tag, @effects.build_path()) do
         [file] ->
           file
 
@@ -42,7 +46,7 @@ defmodule DuckDuck.CLI do
 
   def resolve!(opts) do
     opts
-    |> Map.put(:tag, get_tag())
+    |> Map.put(:tag, @effects.get_tag())
     |> resolve!()
   end
 
@@ -66,11 +70,11 @@ defmodule DuckDuck.CLI do
   end
 
   def run!(%{tag: tag, file: file, yes: true}) do
-    {:ok, _all} = Application.ensure_all_started(:httpoison)
+    @effects.start_http_client()
 
     owner = Application.fetch_env!(:duckduck, :owner)
     repo = Application.fetch_env!(:duckduck, :repo)
-    api_token = read_api_token()
+    api_token = @effects.read_api_token()
 
     unless valid_token?(api_token, owner, repo) do
       fail("GitHub doesn't think this token is valid!")

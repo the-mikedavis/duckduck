@@ -12,7 +12,10 @@ defmodule DuckDuck.MixProject do
       deps: deps(),
       aliases: aliases(),
       test_coverage: [tool: ExCoveralls],
+      elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.html": :test,
         bless: :test
       ],
       package: package(),
@@ -33,9 +36,13 @@ defmodule DuckDuck.MixProject do
       {:ex_doc, "~> 0.19.1", only: [:dev, :test]},
       {:credo, "~> 0.9.1", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.7", only: :test},
-      {:private, "~> 0.1.1"}
+      {:private, "~> 0.1.1"},
+      {:mox, "~> 0.4"}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp package do
     [
