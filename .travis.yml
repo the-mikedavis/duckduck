@@ -1,0 +1,24 @@
+dist: trusty
+sudo: required
+language: elixir
+elixir:
+  - 1.7.2
+otp_release:
+  - 21.0
+env:
+  global:
+    - MIX_ENV=test
+    - VERBOSE_TEST=true
+
+before_script:
+  - mix do deps.get, deps.compile
+
+script:
+  - mix format --check-formatted
+  - mix compile --warnings-as-errors
+  - mix coveralls.travis
+  - mix credo
+
+branches:
+  only:
+    - master
