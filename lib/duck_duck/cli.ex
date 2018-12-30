@@ -4,84 +4,48 @@ defmodule DuckDuck.CLI do
   """
 
   import DuckDuck
-  alias Mix.Project
-  alias DuckDuck.Effects
+  alias Ecto.Changeset
+  alias DuckDuck.{Effects, UploadCommand}
+  use Private
 
-  @switches [tag: :string, file: :string, yes: :boolean]
-  @aliases [t: :tag, f: :file, y: :yes]
+  @switches [tag: :string, path: :string, yes: :boolean]
+  @aliases [t: :tag, f: :path, y: :yes]
 
   @effects Application.get_env(:duckduck, :effects_client, Effects)
 
-  def parse!(argv) do
+  @spec parse([String.t()]) :: Changeset.t()
+  def parse(argv) do
     {parsed, _rest} =
       OptionParser.parse!(argv, switches: @switches, aliases: @aliases)
 
-    Map.new(parsed)
+    # translate to the keys of the UploadCommand schema
+    params =
+      parsed
+      |> Map.new()
+      |> Enum.map(&translate/1)
+
+    UploadCommand.changeset(%UploadCommand{}, params)
   end
 
-  # fill in missing values
 
-  def resolve!(%{tag: _tag, file: _file} = opts), do: opts
-
-  def resolve!(%{file: _file} = opts),
-    do: Map.put(opts, :tag, @effects.get_tag())
-
-  def resolve!(%{tag: tag} = opts) do
-    app_name = Keyword.fetch!(Project.config(), :app)
-
-    file =
-      case @effects.release_files(app_name, tag, @effects.build_path()) do
-        [file] ->
-          file
-
-        [] ->
-          fail("No local release files found for #{tag}!")
-
-        [_ | _] ->
-          fail("Found too many local release files for #{tag}")
-      end
-
-    Map.put(opts, :file, file)
-  end
-
-  def resolve!(opts) do
-    opts
-    |> Map.put(:tag, @effects.get_tag())
-    |> resolve!()
-  end
-
-  def confirm!(%{yes: true} = opts), do: opts
-
-  def confirm!(%{file: file, tag: tag} = opts) do
-    "I want to upload #{file} to tag #{tag}.\nIs this ok? [Y/n] "
-    |> IO.gets()
-    |> String.trim()
-    |> String.downcase()
-    |> case do
-      "" ->
-        Map.put(opts, :yes, true)
-
-      "y" <> _ ->
-        Map.put(opts, :yes, true)
-
-      _ ->
-        fail("Aborting!")
-    end
-  end
-
-  def run!(%{tag: tag, file: file, yes: true}) do
+  def run(%{tag: tag, path: path, yes: true}) do
     @effects.start_http_client()
 
     owner = Application.fetch_env!(:duckduck, :owner)
     repo = Application.fetch_env!(:duckduck, :repo)
     api_token = @effects.read_api_token()
 
-    unless valid_token?(api_token, owner, repo) do
-      fail("GitHub doesn't think this token is valid!")
-    end
+    # unless valid_token?(api_token, owner, repo) do
+    # fail("GitHub doesn't think this token is valid!")
+    # end
 
     upload_url = find_upload_url(api_token, owner, repo, tag)
 
-    upload(file, api_token, upload_url)
+    upload(path, api_token, upload_url)
+  end
+
+  private do
+    defp translate({:yes, accepted?}), do: {:accept?, accepted?}
+    defp translate(pair), do: pair
   end
 end

@@ -3,29 +3,13 @@ defmodule DuckDuck.Effects do
 
   alias Mix.Project
 
-  @no_api_token_msg """
-  Couldn't find the API token! Please add a valid GitHub API token either
-
-  - In the default location: `~/.goose_api_token`
-  - In a config file like so
-
-  ```
-  # config/config.exs
-  config :duckduck,
-    owner: "the-mikedavis",
-    repo: "duck_duck",
-    token_file: "~/.duck_duck_token_file" # OR
-    api_token: "MY_API_TOKEN"
-  ```
-  """
-
   defmodule Behaviour do
     @moduledoc false
 
     @callback get_tag() :: String.t()
     @callback release_files(atom(), String.t(), Path.t()) :: [Path.t()]
     @callback build_path() :: Path.t()
-    @callback read_api_token() :: String.t() | no_return()
+    @callback read_api_token() :: {:ok | :error, String.t()}
     @callback start_http_client() :: :ok
     @callback post_file!(String.t(), Path.t(), [{String.t(), String.t()}]) ::
                 %HTTPoison.Response{}
@@ -73,17 +57,19 @@ defmodule DuckDuck.Effects do
       |> Path.expand()
 
     with :error <- Application.fetch_env(:duckduck, :api_token),
-         false <- File.exists?(token_file) do
-      DuckDuck.puts_failure(@no_api_token_msg)
-      System.halt(1)
+         true <- File.exists?(token_file),
+         {:ok, contents} <- File.read(token_file) do
+      {:ok, String.trim(contents)}
     else
-      {:ok, api_token} ->
-        api_token
+      # user put their api token in the config (matches first clause)
+      {:ok, api_token} -> {:ok, api_token}
 
-      true ->
-        token_file
-        |> File.read!()
-        |> String.trim()
+      # the file doesn't exist
+      false ->
+        {:error, "The token file cannot be found."}
+
+      {:error, reason} ->
+        {:error, "The token file could not be read: #{reason}"}
     end
   end
 

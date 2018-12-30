@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Goose do
   use Mix.Task
-  alias DuckDuck.{CLI, DeadDuckError}
+  alias DuckDuck.CLI
+  import DuckDuck.Transform
 
   @moduledoc """
   A mix task to upload distillery releases to GitHub.
@@ -23,17 +24,15 @@ defmodule Mix.Tasks.Goose do
 
   @doc "Upload a release artifact to GitHub."
   def run(argv) do
-    try do
-      argv
-      |> CLI.parse!()
-      |> CLI.resolve!()
-      |> CLI.confirm!()
-      |> CLI.run!()
-    rescue
-      e in DeadDuckError ->
-        DuckDuck.puts_failure(e.message)
-
-        System.halt(1)
-    end
+    argv
+    |> CLI.parse()
+    |> put_owner_and_repo()
+    |> put_tag()
+    |> put_path()
+    |> put_accept()
+    |> put_api_token()
+    |> upload()
+    |> IO.ANSI.format()
+    |> IO.puts()
   end
 end
