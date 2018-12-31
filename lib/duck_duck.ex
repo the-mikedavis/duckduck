@@ -7,6 +7,7 @@ defmodule DuckDuck do
   alias __MODULE__.Effects
   @effects Application.get_env(:duckduck, :effects_client, Effects)
 
+  @doc "Checks if a token is valid by bouncing of an API endpoint"
   @spec valid_token?(String.t(), String.t(), String.t()) :: boolean()
   def valid_token?(api_token, owner, repo) do
     owner
@@ -41,7 +42,10 @@ defmodule DuckDuck do
   def create_release_from_tag(api_token, owner, repo, tag) do
     owner
     |> release_creation_url(repo)
-    |> @effects.post!(Jason.encode!(%{"tag_name" => tag}), auth_header(api_token))
+    |> @effects.post!(
+      Jason.encode!(%{"tag_name" => tag}),
+      auth_header(api_token)
+    )
     |> Map.get(:body)
     |> Jason.decode!()
     |> Map.get("upload_url")
@@ -56,9 +60,7 @@ defmodule DuckDuck do
     |> String.downcase()
     |> case do
       "" -> true
-
       "y" <> _ -> true
-
       _ -> false
     end
   end
@@ -121,7 +123,10 @@ defmodule DuckDuck do
       token_check_url(owner, repo) <> "/releases"
     end
 
-    defp ok_http_response?({:ok, %HTTPoison.Response{status_code: status}}) when status in 200..206, do: true
+    defp ok_http_response?({:ok, %HTTPoison.Response{status_code: status}})
+         when status in 200..206,
+         do: true
+
     defp ok_http_response?(_), do: false
 
     defp translate_upload_url(%{"message" => "Not Found"}),
@@ -129,22 +134,20 @@ defmodule DuckDuck do
 
     defp translate_upload_url(%{"upload_url" => url}), do: {:ok, url}
 
+    @spec good_upload?(%{}) :: :ok | {:error, String.t()}
     defp good_upload?(%{"errors" => [%{"code" => "already_exists"}]}) do
       {:error,
-        """
-        GitHub said that there's already a release artifact with this name for
-        this tag! Make a new tag and trying again.
-        """}
+       """
+       GitHub said that there's already a release artifact with this name for
+       this tag! Make a new tag and trying again.
+       """}
     end
 
     defp good_upload?(%{"message" => "Not Found"}) do
-      {:error,
-        "I could not write to this tag! Check your token and try again."}
+      {:error, "I could not write to this tag! Check your token and try again."}
     end
 
     # denotes that a release was successfully uploaded
-    defp good_upload?(%{"content_type" => "application/octet-stream"}) do
-      {:ok, "Release successfully uploaded"}
-    end
+    defp good_upload?(%{"content_type" => "application/octet-stream"}), do: :ok
   end
 end

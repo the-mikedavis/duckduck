@@ -1,6 +1,5 @@
 defmodule Mix.Tasks.Goose do
   use Mix.Task
-  alias DuckDuck.CLI
   import DuckDuck.Transform
 
   @moduledoc """
@@ -25,8 +24,9 @@ defmodule Mix.Tasks.Goose do
   @doc "Upload a release artifact to GitHub."
   def run(argv) do
     argv
-    |> CLI.parse()
-    |> put_owner_and_repo()
+    |> parse()
+    |> put_owner()
+    |> put_repo()
     |> put_tag()
     |> put_path()
     |> put_accept()

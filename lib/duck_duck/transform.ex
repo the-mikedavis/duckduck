@@ -4,15 +4,67 @@ defmodule DuckDuck.Transform do
 
   @effects Application.get_env(:duckduck, :effects_client, DuckDuck.Effects)
 
+  @switches [tag: :string, path: :string, yes: :boolean]
+  @aliases [t: :tag, f: :path, y: :yes]
+
+  @doc "Transform an argument list into a command changeset"
+  @spec parse([String.t()]) :: Changeset.t()
+  def parse(argv) do
+    {parsed, _rest} =
+      OptionParser.parse!(argv, switches: @switches, aliases: @aliases)
+
+    params =
+      parsed
+      |> Enum.map(&translate/1)
+      |> Enum.into(%{})
+
+    Command.changeset(%Command{}, params)
+  end
+
+  # translate to the keys of the UploadCommand schema
+  @spec translate({atom(), any()}) :: {atom(), any()}
+  defp translate({:yes, accepted?}), do: {:accept?, accepted?}
+  defp translate({:file, path}), do: {:path, path}
+  defp translate(pair), do: pair
+
   @doc """
-  Put the owner and repo in the changeset if not already there
+  Put the owner in the changeset if not already there
   """
-  @spec put_owner_and_repo(Changeset.t()) :: Changeset.t()
-  def put_owner_and_repo(%Changeset{valid?: true} = changeset), do: changeset
-  def put_owner_and_repo(changeset) do
-    with {:ok, owner} <- Application.fetch_env(:duckduck, :owner),
-         {:ok, repo} <- Application.fetch_env(:duckduck, :repo) do
-      Command.changeset(changeset, %{owner: owner, repo: repo})
+  @spec put_owner(Changeset.t()) :: Changeset.t()
+  def put_owner(%Changeset{changes: %{owner: _owner}} = changeset),
+    do: changeset
+
+  def put_owner(changeset) do
+    case @effects.fetch_env(:duckduck, :owner) do
+      {:ok, owner} ->
+        Command.changeset(changeset, %{owner: owner})
+
+      :error ->
+        Changeset.add_error(
+          changeset,
+          :owner,
+          "Couldn't find repo owner in config"
+        )
+    end
+  end
+
+  @doc """
+  Put the repo in the changeset if not already there
+  """
+  @spec put_repo(Changeset.t()) :: Changeset.t()
+  def put_repo(%Changeset{changes: %{repo: _repo}} = changeset), do: changeset
+
+  def put_repo(changeset) do
+    case @effects.fetch_env(:duckduck, :repo) do
+      {:ok, repo} ->
+        Command.changeset(changeset, %{repo: repo})
+
+      :error ->
+        Changeset.add_error(
+          changeset,
+          :repo,
+          "Couldn't find repo name in config"
+        )
     end
   end
 
@@ -20,14 +72,10 @@ defmodule DuckDuck.Transform do
   Put the tag in a changeset if the changeset is not already valid.
   """
   @spec put_tag(Changeset.t()) :: Changeset.t()
-  def put_tag(%Changeset{valid?: true} = changeset), do: changeset
-  def put_tag(changeset) do
-    case Changeset.fetch_change(changeset, :tag) do
-      {:changes, _tag} -> changeset
+  def put_tag(%Changeset{changes: %{tag: _tag}} = changeset), do: changeset
 
-      :error ->
-        Command.changeset(changeset, %{tag: @effects.get_tag()})
-    end
+  def put_tag(changeset) do
+    Command.changeset(changeset, %{tag: @effects.get_tag()})
   end
 
   @doc """
@@ -35,56 +83,42 @@ defmodule DuckDuck.Transform do
   and valid.
   """
   @spec put_path(Changeset.t()) :: Changeset.t()
-  def put_path(%Changeset{valid?: true} = changeset), do: changeset
-  def put_path(changeset) do
-    with :error <-  Changeset.fetch_change(changeset, :path),
-         {:ok, tag} <- Changeset.fetch_change(changeset, :tag),
-         {:ok, file} <- DuckDuck.find_release_file(tag) do
-      Command.changeset(changeset, %{path: file})
-    else
-      # there was an error sourcing the files
+  def put_path(%Changeset{changes: %{path: _path}} = changeset), do: changeset
+
+  def put_path(%Changeset{changes: %{tag: tag}} = changeset) do
+    case DuckDuck.find_release_file(tag) do
+      {:ok, file} ->
+        Command.changeset(changeset, %{path: file})
+
       {:error, reason} ->
         Changeset.add_error(changeset, :path, reason)
-
-      # the changeset already has a suitable path change
-      {:changes, _path} ->
-        changeset
-
-      # the tag is not in the changes
-      :error ->
-        changeset
     end
   end
+
+  def put_path(changeset), do: changeset
 
   @doc """
   Put the acceptance if the user has confirmed.
   """
   @spec put_accept(Changeset.t()) :: Changeset.t()
-  def put_accept(changeset) do
-    with :error <- Changeset.fetch_change(changeset, :accept?),
-         {:changes, tag} <- Changeset.fetch_change(changeset, :tag),
-         {:changes, path} <- Changeset.fetch_change(changeset, :path) do
-      Command.changeset(changeset, %{accept?: DuckDuck.confirm(path, tag)})
-    else
-      # either the tag or path fields are invalid, so just fall through
-      :error ->
-        changeset
+  def put_accept(%Changeset{changes: %{accept?: true}} = changeset),
+    do: changeset
 
-      # the changeset was already confirmed (matches first clause)
-      {:changes, true} ->
-        changeset
-    end
+  def put_accept(%Changeset{changes: %{tag: tag, path: path}} = changeset) do
+    Command.changeset(changeset, %{accept?: DuckDuck.confirm(path, tag)})
   end
+
+  # if either path or tag are not present, it's fine to just pass through
+  def put_accept(changeset), do: changeset
 
   @doc """
   Put the api token in the changeset if not already there.
   """
   @spec put_api_token(Changeset.t()) :: Changeset.t()
-  def put_api_token(%Changeset{valid?: true} = changeset), do: changeset
+  def put_api_token(%Changeset{changes: %{api_token: _token}} = changeset),
+    do: changeset
+
   def put_api_token(changeset) do
-    # there's no other way to put that api_token in the changeset for now.
-    # that's why this function is so simple.
-    # path and tag and confirm have cli flags
     Command.changeset(changeset, %{api_token: @effects.read_api_token()})
   end
 
@@ -97,24 +131,35 @@ defmodule DuckDuck.Transform do
   the release from the tag. You can do this with a single API call.
   """
   @spec put_upload_url(Changeset.t()) :: Changeset.t()
-  def put_upload_url(%Changeset{changes: %{api_token: token, owner: owner, repo: repo, tag: tag}} = changeset) do
-    Command.changeset(changeset, %{upload_url: DuckDuck.find_upload_url(token, owner, repo, tag)})
+  def put_upload_url(
+        %Changeset{
+          changes: %{api_token: token, owner: owner, repo: repo, tag: tag}
+        } = changeset
+      ) do
+    Command.changeset(changeset, %{
+      upload_url: DuckDuck.find_upload_url(token, owner, repo, tag)
+    })
   end
+
   def put_upload_url(changeset) do
     Changeset.add_error(
       changeset,
       :upload_url,
       """
-      Couldn't find the upload url because I didn't know at least one of 
+      Couldn't find the upload url because I didn't know at least one of
       - api token
       - repo owner
       - repo name
       - tag
-      """)
+      """
+    )
   end
 
   @spec upload(Changeset.t()) :: IO.chardata()
-  def upload(%Changeset{changes: %{path: path, api_token: api_token, upload_url: url}, valid?: true}) do
+  def upload(%Changeset{
+        changes: %{path: path, api_token: api_token, upload_url: url},
+        valid?: true
+      }) do
     IO.puts("Please wait. Uploading #{path}...")
 
     case DuckDuck.upload(path, api_token, url) do
@@ -125,10 +170,11 @@ defmodule DuckDuck.Transform do
         [:red, reason]
     end
   end
+
   def upload(%Changeset{errors: errors}) do
     fail_message = ["Release upload ", :red, "failed", :reset, ".\n"]
 
-    Enum.reduce(errors, fail_message, fn {key, message}, acc ->
+    Enum.reduce(errors, fail_message, fn {key, {message, _}}, acc ->
       acc ++ [:red, "#{key}", :reset, ":\n", message, "\n"]
     end)
   end

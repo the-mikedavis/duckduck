@@ -19,6 +19,8 @@ defmodule DuckDuck.Effects do
                 %HTTPoison.Response{}
     @callback get(String.t(), [{String.t(), String.t()}]) ::
                 {:ok, %HTTPoison.Response{}} | {:error, any()}
+    @callback exists?(Path.t()) :: boolean()
+    @callback fetch_env(atom(), atom()) :: {:ok, any()} | :error
   end
 
   @behaviour __MODULE__.Behaviour
@@ -62,7 +64,8 @@ defmodule DuckDuck.Effects do
       {:ok, String.trim(contents)}
     else
       # user put their api token in the config (matches first clause)
-      {:ok, api_token} -> {:ok, api_token}
+      {:ok, api_token} ->
+        {:ok, api_token}
 
       # the file doesn't exist
       false ->
@@ -96,4 +99,10 @@ defmodule DuckDuck.Effects do
 
   @impl true
   def get(url, headers), do: HTTPoison.get(url, headers)
+
+  @impl true
+  def exists?(path), do: File.exists?(path)
+
+  @impl true
+  def fetch_env(app, entry), do: Application.fetch_env(app, entry)
 end

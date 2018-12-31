@@ -3,6 +3,8 @@ defmodule DuckDuck.UploadCommand do
   import Ecto.Changeset
   alias Ecto.Changeset
 
+  @effects Application.fetch_env!(:duckduck, :effects_client)
+
   @moduledoc """
   A command to upload a tarball to GitHub.
 
@@ -46,8 +48,8 @@ defmodule DuckDuck.UploadCommand do
   # ensure that the file does exist before I try to upload it
   @spec validate_file_exists(Changeset.t()) :: Changeset.t()
   defp validate_file_exists(changeset) do
-    validate_change(changeset, :path, :exists, fn (_, path) ->
-      case File.exists?(path) do
+    validate_change(changeset, :path, :exists, fn :path, path ->
+      case @effects.exists?(path) do
         true -> []
         false -> [path: "No release files found at #{path}"]
       end
