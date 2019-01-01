@@ -21,6 +21,8 @@ defmodule DuckDuck.Effects do
                 {:ok, %HTTPoison.Response{}} | {:error, any()}
     @callback exists?(Path.t()) :: boolean()
     @callback fetch_env(atom(), atom()) :: {:ok, any()} | :error
+    @callback puts(IO.chardata()) :: :ok
+    @callback puts(atom(), IO.chardata()) :: :ok
   end
 
   @behaviour __MODULE__.Behaviour
@@ -105,4 +107,7 @@ defmodule DuckDuck.Effects do
 
   @impl true
   def fetch_env(app, entry), do: Application.fetch_env(app, entry)
+
+  @impl true
+  def puts(device \\ :stdio, data), do: IO.puts(device, data)
 end

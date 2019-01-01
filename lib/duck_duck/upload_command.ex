@@ -3,7 +3,7 @@ defmodule DuckDuck.UploadCommand do
   import Ecto.Changeset
   alias Ecto.Changeset
 
-  @effects Application.fetch_env!(:duckduck, :effects_client)
+  @effects Application.get_env(:duckduck, :effects_client, DuckDuck.Effects)
 
   @moduledoc """
   A command to upload a tarball to GitHub.
@@ -24,25 +24,46 @@ defmodule DuckDuck.UploadCommand do
     field(:repo, :string)
     field(:tag, :string)
     field(:path, :string)
-    field(:accept?, :boolean, default: false)
+    field(:accept?, :boolean)
     field(:api_token, :string)
     field(:upload_url, :string)
   end
 
-  @doc """
-  Apply changes to an ecto changeset of this command.
-  """
-  @spec changeset(__MODULE__.t()) :: Ecto.Changeset.t()
-  @spec changeset(__MODULE__.t(), %{}) :: Ecto.Changeset.t()
-  def changeset(changeset, params \\ %{}) do
+  @spec transform(__MODULE__.t() | Changeset.t(), %{}) ::
+          __MODULE__.t() | {:error, String.t()}
+  def transform(changeset, params \\ %{}) do
     changeset
     |> cast(params, @fields)
-    |> validate_required(@fields)
-    |> validate_acceptance(:accept?)
+    |> validate_confirmation()
     |> validate_file_exists()
-    # api keys are alphanumeric from start to finish
     |> validate_format(:api_token, ~r/^\w+$/)
     |> validate_token()
+    |> case do
+      %Changeset{valid?: true} = changeset ->
+        apply_changes(changeset)
+
+      %Changeset{errors: errors} ->
+        {:error, join_errors(errors)}
+    end
+  end
+
+  @spec join_errors(Keyword.t()) :: String.t()
+  defp join_errors(errors) do
+    errors
+    |> Enum.map(fn {key, {message, _}} ->
+      ["Validation for '#{key}' ", :red, "failed", :reset, ": #{message}"]
+      |> IO.ANSI.format()
+      |> IO.chardata_to_string()
+    end)
+    |> Enum.join("\n")
+  end
+
+  @spec validate_confirmation(Changeset.t()) :: Changeset.t()
+  def validate_confirmation(changeset) do
+    validate_change(changeset, :accept?, :confirmation, fn
+      :accept?, true -> []
+      :accept?, false -> [accept?: "User aborted."]
+    end)
   end
 
   # ensure that the file does exist before I try to upload it
@@ -60,9 +81,11 @@ defmodule DuckDuck.UploadCommand do
 
   # api keys should bounce off the endpoint without errors
   @spec validate_token(Changeset.t()) :: Changeset.t()
-  defp validate_token(%Changeset{changes: changes} = changeset) do
+  defp validate_token(
+         %Changeset{data: %__MODULE__{owner: owner, repo: repo}} = changeset
+       ) do
     validate_change(changeset, :api_token, :permissions, fn _, token ->
-      case DuckDuck.valid_token?(token, changes.owner, changes.repo) do
+      case DuckDuck.valid_token?(token, owner, repo) do
         true -> []
         false -> [api_token: @token_check_error]
       end

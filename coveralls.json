@@ -6,7 +6,6 @@
   "skip_files": [
     "test/*",
     "deps/*",
-    "lib/duck_duck/effects.ex",
-    "lib/mix/tasks/goose.ex"
+    "lib/duck_duck/effects.ex"
   ]
 }
