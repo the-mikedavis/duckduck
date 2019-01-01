@@ -163,7 +163,7 @@ distillery, and upload the tarball to GitHub.
 ```elixir
 def deps do
   [
-    {:duckduck, "~> 1.0"}
+    {:duckduck, "~> 1.1"}
   ]
 end
 ```
