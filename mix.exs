@@ -33,11 +33,12 @@ defmodule DuckDuck.MixProject do
     [
       {:jason, "~> 1.1"},
       {:httpoison, "~> 1.4"},
-      {:ex_doc, "~> 0.19.1", only: [:dev, :test]},
-      {:credo, "~> 0.9.1", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.19.1", only: :dev},
+      {:credo, "~> 0.9.1", only: :test, runtime: false},
       {:excoveralls, "~> 0.7", only: :test},
       {:private, "~> 0.1.1"},
-      {:mox, "~> 0.4"}
+      {:mox, "~> 0.4", only: :test},
+      {:ecto, ">= 2.0.0"}
     ]
   end
 

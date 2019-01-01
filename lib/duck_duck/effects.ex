@@ -3,29 +3,13 @@ defmodule DuckDuck.Effects do
 
   alias Mix.Project
 
-  @no_api_token_msg """
-  Couldn't find the API token! Please add a valid GitHub API token either
-
-  - In the default location: `~/.goose_api_token`
-  - In a config file like so
-
-  ```
-  # config/config.exs
-  config :duckduck,
-    owner: "the-mikedavis",
-    repo: "duck_duck",
-    token_file: "~/.duck_duck_token_file" # OR
-    api_token: "MY_API_TOKEN"
-  ```
-  """
-
   defmodule Behaviour do
     @moduledoc false
 
     @callback get_tag() :: String.t()
     @callback release_files(atom(), String.t(), Path.t()) :: [Path.t()]
     @callback build_path() :: Path.t()
-    @callback read_api_token() :: String.t() | no_return()
+    @callback read_api_token() :: {:ok | :error, String.t()}
     @callback start_http_client() :: :ok
     @callback post_file!(String.t(), Path.t(), [{String.t(), String.t()}]) ::
                 %HTTPoison.Response{}
@@ -35,6 +19,10 @@ defmodule DuckDuck.Effects do
                 %HTTPoison.Response{}
     @callback get(String.t(), [{String.t(), String.t()}]) ::
                 {:ok, %HTTPoison.Response{}} | {:error, any()}
+    @callback exists?(Path.t()) :: boolean()
+    @callback fetch_env(atom(), atom()) :: {:ok, any()} | :error
+    @callback puts(IO.chardata()) :: :ok
+    @callback puts(atom(), IO.chardata()) :: :ok
   end
 
   @behaviour __MODULE__.Behaviour
@@ -73,17 +61,20 @@ defmodule DuckDuck.Effects do
       |> Path.expand()
 
     with :error <- Application.fetch_env(:duckduck, :api_token),
-         false <- File.exists?(token_file) do
-      DuckDuck.puts_failure(@no_api_token_msg)
-      System.halt(1)
+         true <- File.exists?(token_file),
+         {:ok, contents} <- File.read(token_file) do
+      {:ok, String.trim(contents)}
     else
+      # user put their api token in the config (matches first clause)
       {:ok, api_token} ->
-        api_token
+        {:ok, api_token}
 
-      true ->
-        token_file
-        |> File.read!()
-        |> String.trim()
+      # the file doesn't exist
+      false ->
+        {:error, "The token file cannot be found."}
+
+      {:error, reason} ->
+        {:error, "The token file could not be read: #{reason}"}
     end
   end
 
@@ -110,4 +101,13 @@ defmodule DuckDuck.Effects do
 
   @impl true
   def get(url, headers), do: HTTPoison.get(url, headers)
+
+  @impl true
+  def exists?(path), do: File.exists?(path)
+
+  @impl true
+  def fetch_env(app, entry), do: Application.fetch_env(app, entry)
+
+  @impl true
+  def puts(device \\ :stdio, data), do: IO.puts(device, data)
 end

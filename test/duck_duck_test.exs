@@ -2,7 +2,6 @@ defmodule DuckDuckTest do
   use ExUnit.Case
 
   import Mox
-  import ExUnit.CaptureIO
   alias DuckDuck, as: DD
 
   @effects Application.fetch_env!(:duckduck, :effects_client)
@@ -19,22 +18,22 @@ defmodule DuckDuckTest do
     end
 
     test "token check", c do
-      assert DD.build_token_check_url(c.owner, c.repo) ==
+      assert DD.token_check_url(c.owner, c.repo) ==
                "#{c.repos_url}/#{c.owner}/#{c.repo}"
     end
 
     test "tags", c do
-      assert DD.build_tags_url(c.owner, c.repo, c.tag) ==
+      assert DD.tags_url(c.owner, c.repo, c.tag) ==
                "#{c.repos_url}/#{c.owner}/#{c.repo}/releases/tags/#{c.tag}"
     end
 
     test "asset upload", _c do
-      assert DD.build_upload_asset_url("/upload", "_build/d.tar.gz") ==
+      assert DD.upload_asset_url("/upload", "_build/d.tar.gz") ==
                "/upload?name=d.tar.gz"
     end
 
     test "release creation", c do
-      assert DD.build_release_creation_url(c.owner, c.repo) ==
+      assert DD.release_creation_url(c.owner, c.repo) ==
                "#{c.repos_url}/#{c.owner}/#{c.repo}/releases"
     end
   end
@@ -42,30 +41,6 @@ defmodule DuckDuckTest do
   test "auth header building" do
     assert DD.auth_header("MYSUPERSECRETTOKEN") ==
              [{"Authorization", "token MYSUPERSECRETTOKEN"}]
-  end
-
-  test "building a failure error" do
-    assert_raise(DD.DeadDuckError, fn ->
-      DD.fail("Ack I totally didn't expect this!!")
-    end)
-  end
-
-  describe "logging" do
-    setup do
-      [str: "hello world"]
-    end
-
-    test "success is green", c do
-      assert capture_io(fn ->
-               DD.puts_success(c.str)
-             end) =~ "\e[32m" <> c.str
-    end
-
-    test "failure is red", c do
-      assert capture_io(fn ->
-               DD.puts_failure(c.str)
-             end) =~ "\e[31m" <> c.str
-    end
   end
 
   # update this once I can tell how we're supposed to know if it's valid or not
@@ -121,25 +96,28 @@ defmodule DuckDuckTest do
       DD.TestData.post_file_success()
     end)
 
-    assert capture_io(fn -> DD.upload("/root/a.tar.gz", "TOKEN", "url") end) =~
-             "Release successfully uploaded"
+    assert :ok = DD.upload("/root/a.tar.gz", "TOKEN", "url")
   end
 
   describe "capturing upload errors" do
     test "with a bad token" do
-      assert capture_io(fn ->
-               DD.TestData.post_file_bad_token()
-               |> response_json()
-               |> DD.good_upload?()
-             end) =~ "Check your token"
+      upload_status =
+        DD.TestData.post_file_bad_token()
+        |> response_json()
+        |> DD.good_upload?()
+
+      assert {:error, reason} = upload_status
+      assert reason =~ "Check your token"
     end
 
     test "with the upload already existing" do
-      assert capture_io(fn ->
-               DD.TestData.post_file_already_exists_response()
-               |> response_json()
-               |> DD.good_upload?()
-             end) =~ "there's already a release artifact"
+      upload_status =
+        DD.TestData.post_file_already_exists_response()
+        |> response_json()
+        |> DD.good_upload?()
+
+      assert {:error, reason} = upload_status
+      assert reason =~ "already a release artifact"
     end
   end
 
