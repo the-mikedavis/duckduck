@@ -29,8 +29,7 @@ defmodule DuckDuck.UploadCommand do
     field(:upload_url, :string)
   end
 
-  @spec transform(__MODULE__.t() | Changeset.t(), %{}) ::
-          __MODULE__.t() | {:error, String.t()}
+  @spec transform(%__MODULE__{}, map()) :: %__MODULE__{} | {:error, String.t()}
   def transform(changeset, params \\ %{}) do
     changeset
     |> cast(params, @fields)

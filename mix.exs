@@ -38,7 +38,8 @@ defmodule DuckDuck.MixProject do
       {:excoveralls, "~> 0.7", only: :test},
       {:private, "~> 0.1.1"},
       {:mox, "~> 0.4", only: :test},
-      {:ecto, ">= 2.0.0"}
+      {:ecto, ">= 2.0.0"},
+      {:dialyxir, "~> 1.0.0-rc.4"}
     ]
   end
 
